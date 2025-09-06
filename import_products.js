@@ -1,10 +1,10 @@
-// import_products.js — Makhazen only, مع وقاية من أخطاء Header
+// import_products.js — Makhazen only (مع تنظيف الهيدر)
 import fs from "fs";
 import yaml from "js-yaml";
 import fetch from "node-fetch";
 
 const config = yaml.load(fs.readFileSync("config.yml", "utf8"));
-const makKey = String((config?.makhazen?.api_key || "")).trim();
+const makKey = String(config?.makhazen?.api_key || "").trim();
 
 if (!makKey) {
   console.error("❌ مفقود مفتاح مخازن في config.yml (makhazen.api_key).");
@@ -12,7 +12,6 @@ if (!makKey) {
 }
 
 async function fetchAPI(url, headers = {}) {
-  // تنظيف قيمة Authorization لتجنّب الأحرف الغريبة
   if (headers.Authorization) headers.Authorization = headers.Authorization.trim();
   const res = await fetch(url, { headers });
   if (!res.ok) throw new Error(`HTTP ${res.status} on ${url}`);
@@ -46,7 +45,7 @@ async function main() {
 
     const raw = await fetchAPI(url, {
       Authorization: `Bearer ${makKey}`,
-      Accept: "application/json",
+      Accept: "application/json"
     });
 
     const allowed = new Set([
