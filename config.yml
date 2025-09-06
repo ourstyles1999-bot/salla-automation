@@ -10,7 +10,8 @@ makhazen:
   api_key: "YOUR_MAKHAZEN_API_KEY"
 
 openai:
-  org_id: ""
+  api_key: "sk-ضع-المفتاح-اللي نسخته-هنا"
+  org_id: "org-ضع-OrganizationID-هنا"
   model: "gpt-4o-mini"
   temperature: 0.7
   max_tokens: 800
