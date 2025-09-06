@@ -1,0 +1,14 @@
+{
+  "name": "salla-automation",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Automation for Our-Styles1999 (Salla + AutoDrop + Makhazen + OpenAI).",
+  "scripts": {
+    "import": "node import_products.js",
+    "optimize": "node optimize_with_openai.js"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0",
+    "node-fetch": "^3.3.2"
+  }
+}
