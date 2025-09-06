@@ -1,1 +1,27 @@
+salla:
+  client_id: "YOUR_SALLA_CLIENT_ID"
+  client_secret: "YOUR_SALLA_CLIENT_SECRET"
+  redirect_uri: "https://your-app-url.com/callback"
+
+autodrop:
+  api_key: "YOUR_AUTODROP_API_KEY"
+
+makhazen:
+  api_key: "YOUR_MAKHAZEN_API_KEY"
+
+openai:
+  api_key: "YOUR_OPENAI_API_KEY"
+  model: "gpt-4o-mini"
+  temperature: 0.7
+  max_tokens: 800
+
+settings:
+  currency: "SAR"
+  vat_rate: 0.15
+  profit_margin:
+    - { min: 0, max: 50, margin: 0.90 }
+    - { min: 51, max: 150, margin: 0.70 }
+    - { min: 151, max: 350, margin: 0.60 }
+    - { min: 351, max: 700, margin: 0.50 }
+    - { min: 701, max: 1500, margin: 0.40 }
 
