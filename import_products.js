@@ -1,31 +1,31 @@
-// import_products.js (Makhazen-only temporarily)
+// import_products.js — Makhazen only, مع وقاية من أخطاء Header
 import fs from "fs";
 import yaml from "js-yaml";
 import fetch from "node-fetch";
 
-const DISABLE_AUTODROP = true; // تخطي AutoDrop مؤقتاً
-
 const config = yaml.load(fs.readFileSync("config.yml", "utf8"));
-const { autodrop, makhazen } = config;
+const makKey = String((config?.makhazen?.api_key || "")).trim();
+
+if (!makKey) {
+  console.error("❌ مفقود مفتاح مخازن في config.yml (makhazen.api_key).");
+  process.exit(1);
+}
 
 async function fetchAPI(url, headers = {}) {
+  // تنظيف قيمة Authorization لتجنّب الأحرف الغريبة
+  if (headers.Authorization) headers.Authorization = headers.Authorization.trim();
   const res = await fetch(url, { headers });
   if (!res.ok) throw new Error(`HTTP ${res.status} on ${url}`);
   return await res.json();
 }
 
-function normalize(p, source = "unknown") {
-  const images =
-    p.images && Array.isArray(p.images) && p.images.length
-      ? p.images
-      : p.main_image
-      ? [p.main_image]
-      : [];
-
+function normalize(p, source = "makhazen") {
+  const images = Array.isArray(p.images) && p.images.length ? p.images
+               : p.main_image ? [p.main_image] : [];
   return {
     source,
     external_id: p.id || p.sku || p.product_id || "",
-    category: (p.category || "").toString().toLowerCase(),
+    category: String(p.category || "").toLowerCase(),
     brand: p.brand || "",
     title_raw: p.title || p.name || "",
     desc_raw: p.description || p.desc || "",
@@ -41,54 +41,30 @@ function normalize(p, source = "unknown") {
 
 async function main() {
   try {
-    const results = [];
-
-    // --- AutoDrop (اختياري) ---
-    if (!DISABLE_AUTODROP) {
-      try {
-        const autoDropUrl =
-          "https://api.autodrop.ai/v1/aliexpress/search?categories=men_tshirts,women_abaya,men_pants,men_shirts,shoes,glasses,watches,bags,beauty_serums,beauty_cleansers,moisturizers,hair_care,makeup_powder,makeup_lipstick,makeup_mascara&sort=orders_desc&min_rating=4.6&min_orders=100&limit=120&market=sa";
-        const ad = await fetchAPI(autoDropUrl, {
-          Authorization: `Bearer ${autodrop.api_key}`,
-          Accept: "application/json"
-        });
-        results.push(...(ad || []).map(p => ({...p, source: "autodrop"})));
-      } catch (e) {
-        console.warn("⚠️ تعذر الاتصال بـ AutoDrop، سيتم المتابعة بدونها:", e.message);
-      }
-    } else {
-      console.log("ℹ️ تم تخطي AutoDrop مؤقتًا (DISABLE_AUTODROP=true).");
-    }
-
-    // --- مخازن (أساسي) ---
-    const makhazenUrl =
+    const url =
       "https://api.makhazen.sa/v1/products/search?categories=men_tshirts,women_abaya,men_pants,men_shirts,shoes,glasses,watches,bags,beauty_serums,beauty_cleansers,moisturizers,hair_care,makeup_powder,makeup_lipstick,makeup_mascara&sort=orders_desc&min_rating=4.6&min_orders=50&limit=120&market=sa";
 
-    const mk = await fetchAPI(makhazenUrl, {
-      Authorization: `Bearer ${makhazen.api_key}`,
-      Accept: "application/json"
+    const raw = await fetchAPI(url, {
+      Authorization: `Bearer ${makKey}`,
+      Accept: "application/json",
     });
-    results.push(...(mk || []).map(p => ({...p, source: "makhazen"})));
 
-    // --- فلترة + حفظ ---
-    const allowedCats = new Set([
+    const allowed = new Set([
       "men_tshirts","men_pants","men_shirts","shoes","glasses","watches","bags",
       "women_abaya","women_tshirts","women_dresses",
       "beauty_serums","beauty_cleansers","moisturizers","hair_care",
       "makeup_powder","makeup_lipstick","makeup_mascara"
     ]);
 
-    const filtered = results.filter((p) => {
-      const catOk = allowedCats.has((p.category || "").toLowerCase());
-      const rating = Number(p.rating || 0);
-      const orders = Number(p.orders || 0);
+    const filtered = (raw || []).filter(p => {
+      const catOk = allowed.has(String(p.category || "").toLowerCase());
       const hasImg = (p.images && p.images.length) || p.main_image;
-      return catOk && rating >= 4.6 && orders >= 50 && hasImg;
+      return catOk && Number(p.rating || 0) >= 4.6 && Number(p.orders || 0) >= 50 && hasImg;
     });
 
-    const normalized = filtered.map(p => normalize(p, p.source));
+    const normalized = filtered.map(p => normalize(p));
     fs.writeFileSync("products_raw.json", JSON.stringify(normalized, null, 2), "utf8");
-    console.log("✅ تم إنشاء products_raw.json بعدد منتجات:", normalized.length);
+    console.log("✅ تم إنشاء products_raw.json بعدد:", normalized.length);
   } catch (e) {
     console.error("❌ خطأ:", e.message);
     process.exit(1);
