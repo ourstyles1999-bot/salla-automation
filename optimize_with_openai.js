@@ -35,6 +35,8 @@ function computePrice(p) {
   return Math.round(withVAT * 2) / 2;
 }
 
+export { computePrice };
+
 // ==== دالة OpenAI (استدعاء مباشر عبر fetch القياسي) ====
 async function callOpenAI(system, user) {
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -105,6 +107,7 @@ function buildUserPrompt(p) {
 }
 
 // ==== التنفيذ ====
+/*
 const raw = JSON.parse(fs.readFileSync(INPUT_PATH, "utf8"));
 if (!Array.isArray(raw)) {
   console.error("الملف products_raw.json يجب أن يحتوي Array من المنتجات.");
@@ -116,3 +119,4 @@ const out = [];
 console.log(`🔧 معالجة ${raw.length} منتج... (قد يستغرق قليلاً محلياً)`);
 
 fo
+*/
