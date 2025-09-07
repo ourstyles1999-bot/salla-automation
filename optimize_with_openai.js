@@ -115,4 +115,20 @@ const out = [];
 
 console.log(`🔧 معالجة ${raw.length} منتج... (قد يستغرق قليلاً محلياً)`);
 
-fo
+for (const p of raw) {
+  try {
+    const aiText = await callOpenAI(SYSTEM_PROMPT, buildUserPrompt(p));
+    const aiData = JSON.parse(aiText);
+    const price = computePrice(p);
+    out.push({
+      ...p,
+      ...aiData,
+      final_price: price
+    });
+  } catch (e) {
+    console.error(`⚠️ فشل معالجة المنتج ${p.external_id || p.title_raw}:`, e.message);
+  }
+}
+
+fs.writeFileSync(OUTPUT_PATH, JSON.stringify(out, null, 2), "utf8");
+console.log(`✅ تم إنشاء ${OUTPUT_PATH} بعدد: ${out.length}`);
