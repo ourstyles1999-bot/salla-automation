@@ -1,1 +1,50 @@
+import express from "express";
+import fetch from "node-fetch";
+
+const app = express();
+const port = 3000;
+
+// ⚠️ ضع القيم من تطبيقك في سلة هنا
+const CLIENT_ID = "778e55e5-cc50-48c1-9667-2c3cc831b9f7"; // Client ID من لوحة سلة
+const CLIENT_SECRET = "ضع-المفتاح-السري-من-سلة-هنا";        // Client Secret من لوحة سلة
+const REDIRECT_URI = "https://www.our-styles.com/callback"; // نفس ما سجلته في سلة
+
+// 🔹 الخطوة 1: توجيه المستخدم لصفحة التفويض
+app.get("/login", (req, res) => {
+  const authUrl = `https://accounts.salla.sa/oauth2/auth?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=offline_access openid`;
+  res.redirect(authUrl);
+});
+
+// 🔹 الخطوة 2: استقبال الكود من سلة في /callback
+app.get("/callback", async (req, res) => {
+  const code = req.query.code;
+  if (!code) return res.send("❌ لم يتم استلام code من سلة");
+
+  try {
+    // 🔹 الخطوة 3: تبادل الكود مع Access Token
+    const tokenResponse = await fetch("https://accounts.salla.sa/oauth2/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "authorization_code",
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
+        redirect_uri: REDIRECT_URI,
+        code: code,
+      }),
+    });
+
+    const data = await tokenResponse.json();
+    console.log("🔑 Token Response:", data);
+
+    res.send(`<h3>تم الحصول على Access Token بنجاح ✅</h3><pre>${JSON.stringify(data, null, 2)}</pre>`);
+  } catch (err) {
+    console.error(err);
+    res.send("❌ خطأ أثناء جلب Access Token");
+  }
+});
+
+app.listen(port, () => {
+  console.log(`🚀 السيرفر شغال على http://localhost:${port}`);
+});
 
